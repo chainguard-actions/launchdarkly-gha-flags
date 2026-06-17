@@ -1,0 +1,37 @@
+name: Test multiple flags in offline mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: ld-flags
+        uses: .
+        with:
+          sdk-key: 'sdk-fake-key-for-offline-mode'
+          flags: |
+            feature-flag-one,true
+            feature-flag-two,false
+          offline: 'true'
+          send-events: 'false'
+      - name: Assert first flag output has expected default value
+        env:
+          ACTUAL: ${{ steps.ld-flags.outputs.feature-flag-one }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected 'true' for feature-flag-one"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert second flag output has expected default value
+        env:
+          ACTUAL: ${{ steps.ld-flags.outputs.feature-flag-two }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected 'false' for feature-flag-two"
+            exit 1
+          fi
+          echo "PASS"

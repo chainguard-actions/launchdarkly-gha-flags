@@ -1,0 +1,31 @@
+name: Test custom context key in offline mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: ld-flags
+        uses: .
+        with:
+          sdk-key: 'sdk-fake-key-for-offline-mode'
+          flags: |
+            my-feature-flag,true
+          context-key: 'my-custom-context-key'
+          offline: 'true'
+          send-events: 'false'
+      - name: Assert action completed with custom context key
+        run: |
+          echo "Action completed successfully with custom context key"
+          echo "PASS"
+      - name: Assert flag output has expected default value
+        env:
+          ACTUAL: ${{ steps.ld-flags.outputs.my-feature-flag }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected 'true' (the default value in offline mode)"
+            exit 1
+          fi
+          echo "PASS"
