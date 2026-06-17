@@ -1,0 +1,26 @@
+name: Test offline single flag evaluation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: flags
+        uses: .
+        with:
+          sdk-key: 'sdk-fake-key-for-offline-mode'
+          flags: |
+            my-feature-flag,true
+          offline: 'true'
+          send-events: 'false'
+      - name: Assert flag output equals default value
+        env:
+          ACTUAL: ${{ steps.flags.outputs.my-feature-flag }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected 'true' but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

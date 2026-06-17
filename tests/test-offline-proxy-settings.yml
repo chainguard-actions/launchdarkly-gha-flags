@@ -1,0 +1,30 @@
+name: Test offline mode with proxy settings
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          sdk-key: 'sdk-fake-key-for-offline-mode'
+          flags: |
+            my-feature-flag,false
+          offline: 'true'
+          send-events: 'false'
+          proxy-auth: 'user:password'
+          proxy-host: 'proxy.example.com'
+          proxy-port: '8080'
+          proxy-scheme: 'http'
+      - name: Assert flag output equals default value
+        env:
+          ACTUAL: ${{ steps.action.outputs.my-feature-flag }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected 'false' but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
