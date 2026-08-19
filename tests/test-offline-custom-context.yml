@@ -1,0 +1,27 @@
+name: Test offline mode with custom context key
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: flags
+        uses: .
+        with:
+          sdk-key: 'sdk-fake-key-for-offline-mode'
+          flags: |
+            my-feature,true
+          context-key: 'custom-context-key-123'
+          offline: 'true'
+          send-events: 'false'
+      - name: Assert flag output is true with custom context key
+        env:
+          ACTUAL: ${{ steps.flags.outputs.my-feature }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected 'true' but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

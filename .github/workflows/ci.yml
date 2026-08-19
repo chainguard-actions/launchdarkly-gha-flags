@@ -1,0 +1,237 @@
+name: Run CI
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+    paths-ignore:
+      - '**.md' # Do not need to run CI for markdown changes.
+  pull_request:
+    branches:
+      - main
+      - 'feat/**'
+    paths-ignore:
+      - '**.md'
+
+permissions: {}
+
+jobs:
+  ci-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - uses: actions/setup-python@3542bca2639a428e1796aaa6a2ffef0c0f575566 # v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
+      - run: npm ci
+      - name: Check build and formatting
+        uses: pre-commit/action@646c83fcd040023954eafda54b4db0192ce70507 # v3.0.0
+
+  #
+  # Flag variation tests
+  #
+
+  flag-variations:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Evaluate flags
+        id: flags
+        uses: ./
+        with:
+          stream-uri: 'https://stream.ld.catamorphic.com'
+          events-uri: 'https://events.ld.catamorphic.com'
+          base-uri: 'https://app.ld.catamorphic.com'
+          sdk-key: ${{ secrets.SDK_KEY }}
+          context-key: context-key
+          flags: |
+            test-string-flag, default
+            test-number-flag, -1
+            test-boolean-flag, false
+            test-json-flag, {}
+
+      - name: Fail if string value is incorrect
+        if: steps.flags.outputs.test-string-flag != 'custom'
+        run: exit 1
+
+      - name: Fail if numeric value is incorrect
+        if: fromJSON(steps.flags.outputs.test-number-flag) != 1
+        run: exit 1
+
+      - name: Fail if boolean value is incorrect
+        if: fromJSON(steps.flags.outputs.test-boolean-flag) != true
+        run: exit 1
+
+      - name: Fail if JSON value is incorrect
+        if: fromJSON(steps.flags.outputs.test-json-flag).pet != 'cat'
+        run: exit 1
+
+  offline-mode-uses-defaults:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Evaluate flags
+        id: flags
+        uses: ./
+        with:
+          stream-uri: 'https://stream.ld.catamorphic.com'
+          events-uri: 'https://events.ld.catamorphic.com'
+          base-uri: 'https://app.ld.catamorphic.com'
+          sdk-key: ${{ secrets.SDK_KEY }}
+          context-key: context-key
+          offline: true
+          flags: |
+            test-string-flag, default
+            test-number-flag, -1
+            test-boolean-flag, false
+            test-json-flag, {"pet": "fish"}
+
+      - name: Fail if string value is incorrect
+        if: steps.flags.outputs.test-string-flag != 'default'
+        run: exit 1
+
+      - name: Fail if numeric value is incorrect
+        if: fromJSON(steps.flags.outputs.test-number-flag) != -1
+        run: exit 1
+
+      - name: Fail if boolean value is incorrect
+        if: fromJSON(steps.flags.outputs.test-boolean-flag) != false
+        run: exit 1
+
+      - name: Fail if JSON value is incorrect
+        if: fromJSON(steps.flags.outputs.test-json-flag).pet != 'fish'
+        run: exit 1
+
+  #
+  # Context targeting tests
+  #
+
+  can-target-custom-context:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Evaluate flags
+        id: flags
+        uses: ./
+        with:
+          stream-uri: 'https://stream.ld.catamorphic.com'
+          events-uri: 'https://events.ld.catamorphic.com'
+          base-uri: 'https://app.ld.catamorphic.com'
+          sdk-key: ${{ secrets.SDK_KEY }}
+          context-key: context-key
+          flags: test-string-flag, default
+
+      - name: Fail if it doesn't match
+        if: steps.flags.outputs.test-string-flag != 'custom'
+        run: exit 1
+
+  can-target-custom-context-with-default-key:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Evaluate flags
+        id: flags
+        uses: ./
+        with:
+          stream-uri: 'https://stream.ld.catamorphic.com'
+          events-uri: 'https://events.ld.catamorphic.com'
+          base-uri: 'https://app.ld.catamorphic.com'
+          sdk-key: ${{ secrets.SDK_KEY }}
+          flags: test-string-flag, default
+
+      - name: Fail if it doesn't match
+        if: steps.flags.outputs.test-string-flag != 'custom'
+        run: exit 1
+
+  can-target-custom-context-with-custom-attribute:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Evaluate flags
+        id: flags
+        uses: ./
+        with:
+          stream-uri: 'https://stream.ld.catamorphic.com'
+          events-uri: 'https://events.ld.catamorphic.com'
+          base-uri: 'https://app.ld.catamorphic.com'
+          sdk-key: ${{ secrets.SDK_KEY }}
+          context-key: non-matching-key
+          flags: test-string-flag, default
+        env:
+          LD_group: beta
+
+      - name: Fail if it doesn't match
+        if: steps.flags.outputs.test-string-flag != 'custom'
+        run: exit 1
+
+  can-target-runner:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Evaluate flags
+        id: flags
+        uses: ./
+        with:
+          stream-uri: 'https://stream.ld.catamorphic.com'
+          events-uri: 'https://events.ld.catamorphic.com'
+          base-uri: 'https://app.ld.catamorphic.com'
+          sdk-key: ${{ secrets.SDK_KEY }}
+          flags: test-string-flag, default
+          context-key: non-matching-key
+        env:
+          RUNNER_TAG: GitHub Actions
+
+      - name: Fail if it doesn't match
+        if: steps.flags.outputs.test-string-flag != 'runner'
+        run: exit 1
+
+  can-target-github-envs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Evaluate flags
+        id: flags
+        uses: ./
+        with:
+          stream-uri: 'https://stream.ld.catamorphic.com'
+          events-uri: 'https://events.ld.catamorphic.com'
+          base-uri: 'https://app.ld.catamorphic.com'
+          sdk-key: ${{ secrets.SDK_KEY }}
+          flags: test-string-flag, default
+          context-key: non-matching-key
+        env:
+          RUNNER_TAG: non-matching-tag
+
+      - name: Fail if it doesn't match
+        if: steps.flags.outputs.test-string-flag != 'github'
+        run: exit 1
