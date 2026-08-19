@@ -1,4 +1,4 @@
-name: Test basic offline mode
+name: Test custom context key in offline mode
 on:
   workflow_dispatch:
 jobs:
@@ -12,15 +12,16 @@ jobs:
           sdk-key: 'sdk-fake-key-for-offline-mode'
           offline: 'true'
           send-events: 'false'
+          context-key: 'my-custom-context'
           flags: |
-            my-boolean-flag,true
-      - name: Assert boolean flag output is true
+            rollout-flag,false
+      - name: Assert rollout-flag output is false (default value)
         env:
-          ACTUAL: ${{ steps.flags.outputs.my-boolean-flag }}
+          ACTUAL: ${{ steps.flags.outputs.rollout-flag }}
         run: |
           echo "actual: $ACTUAL"
-          if [ "$ACTUAL" != "true" ]; then
-            echo "FAIL: expected 'true' but got '$ACTUAL'"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected 'false' but got '$ACTUAL'"
             exit 1
           fi
           echo "PASS"

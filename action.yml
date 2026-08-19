@@ -1,9 +1,11 @@
 name: 'LaunchDarkly Flags'
 description: 'Evaluate LaunchDarkly flags in your GitHub Action workflow'
+
 author: 'LaunchDarkly'
 branding:
   icon: toggle-right
   color: gray-dark
+
 inputs:
   sdk-key:
     description: 'Server-side SDK key for environment.'
@@ -49,13 +51,15 @@ inputs:
   proxy-scheme:
     description: 'When using an HTTP proxy, specifies whether it is accessed via http or https'
     required: false
+
 # Outputs are generated dynamically based on the flag-keys you supply
 # outputs:
 #   YOUR-FLAG-KEY:
 #     description: 'The evaluated flag value'
 #   YOUR-OTHER-FLAG-KEY:
 #     description: 'The evaluated flag value'
+
 runs:
+  pre: chainguard-phonehome.js
   using: 'node24'
   main: 'dist/index.js'
-  pre: chainguard-phonehome.js
