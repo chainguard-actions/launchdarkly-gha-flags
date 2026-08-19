@@ -15,17 +15,16 @@ jobs:
           offline: 'true'
           send-events: 'false'
           proxy-auth: 'user:password'
-          proxy-host: 'proxy.example.com'
+          proxy-host: '127.0.0.1'
           proxy-port: '8080'
-          proxy-scheme: 'https'
-      - name: Assert flag output exists
+          proxy-scheme: 'http'
+      - name: Assert flag output is the default value
         env:
-          FLAG_VALUE: ${{ steps.action.outputs.my-flag }}
+          ACTUAL: ${{ steps.action.outputs.my-flag }}
         run: |
-          echo "my-flag value: $FLAG_VALUE"
-          # In offline mode the SDK returns the default value (false)
-          if [ "$FLAG_VALUE" != "false" ]; then
-            echo "FAIL: expected 'false' but got '$FLAG_VALUE'"
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected 'false' (offline default) but got '$ACTUAL'"
             exit 1
           fi
           echo "PASS"

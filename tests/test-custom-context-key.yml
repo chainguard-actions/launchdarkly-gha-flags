@@ -1,4 +1,4 @@
-name: Test custom context key offline mode
+name: Test custom context key offline
 on:
   workflow_dispatch:
 jobs:
@@ -11,17 +11,17 @@ jobs:
         with:
           sdk-key: 'sdk-fake-key-for-offline-mode'
           flags: |
-            my-feature,false
+            my-flag,true
           context-key: 'my-custom-context-key'
           offline: 'true'
           send-events: 'false'
-      - name: Assert my-feature flag output is false
+      - name: Assert flag output equals default value with custom context key
         env:
-          ACTUAL: ${{ steps.flags.outputs.my-feature }}
+          ACTUAL: ${{ steps.flags.outputs.my-flag }}
         run: |
           echo "actual: $ACTUAL"
-          if [ "$ACTUAL" != "false" ]; then
-            echo "FAIL: expected 'false' but got '$ACTUAL'"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected 'true' but got '$ACTUAL'"
             exit 1
           fi
           echo "PASS"

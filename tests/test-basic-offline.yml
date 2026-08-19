@@ -1,4 +1,4 @@
-name: Test basic offline mode
+name: Test basic offline flag evaluation
 on:
   workflow_dispatch:
 jobs:
@@ -14,7 +14,7 @@ jobs:
             my-boolean-flag,true
           offline: 'true'
           send-events: 'false'
-      - name: Assert boolean flag output is true
+      - name: Assert boolean flag output equals default value
         env:
           ACTUAL: ${{ steps.flags.outputs.my-boolean-flag }}
         run: |
