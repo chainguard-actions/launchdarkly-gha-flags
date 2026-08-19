@@ -1,0 +1,29 @@
+name: Test custom context key in offline mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: flags
+        uses: .
+        with:
+          sdk-key: 'sdk-fake-key-for-offline-mode'
+          flags: |
+            rollout-flag,true
+          context-key: 'my-custom-context-key'
+          offline: 'true'
+          send-events: 'false'
+
+      - name: Assert rollout-flag returns true default with custom context key
+        env:
+          ACTUAL: ${{ steps.flags.outputs.rollout-flag }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected 'true' but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
