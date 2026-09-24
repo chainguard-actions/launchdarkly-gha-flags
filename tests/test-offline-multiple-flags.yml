@@ -1,0 +1,40 @@
+name: Test offline multiple flag evaluation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: flags
+        uses: .
+        with:
+          sdk-key: 'sdk-fake-offline-key'
+          offline: 'true'
+          send-events: 'false'
+          flags: |
+            feature-enabled,true
+            feature-disabled,false
+
+      - name: Assert feature-enabled flag default value
+        env:
+          FLAG_VALUE: ${{ steps.flags.outputs.feature-enabled }}
+        run: |
+          echo "feature-enabled value: $FLAG_VALUE"
+          if [ "$FLAG_VALUE" != "true" ]; then
+            echo "FAIL: expected 'true' but got '$FLAG_VALUE'"
+            exit 1
+          fi
+          echo "PASS: feature-enabled returned expected default value"
+
+      - name: Assert feature-disabled flag default value
+        env:
+          FLAG_VALUE: ${{ steps.flags.outputs.feature-disabled }}
+        run: |
+          echo "feature-disabled value: $FLAG_VALUE"
+          if [ "$FLAG_VALUE" != "false" ]; then
+            echo "FAIL: expected 'false' but got '$FLAG_VALUE'"
+            exit 1
+          fi
+          echo "PASS: feature-disabled returned expected default value"

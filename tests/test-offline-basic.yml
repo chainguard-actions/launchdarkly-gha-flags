@@ -1,0 +1,28 @@
+name: Test offline basic flag evaluation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: flags
+        uses: .
+        with:
+          sdk-key: 'sdk-fake-offline-key'
+          offline: 'true'
+          send-events: 'false'
+          flags: |
+            my-boolean-flag,true
+
+      - name: Assert boolean flag default value returned
+        env:
+          FLAG_VALUE: ${{ steps.flags.outputs.my-boolean-flag }}
+        run: |
+          echo "my-boolean-flag value: $FLAG_VALUE"
+          if [ "$FLAG_VALUE" != "true" ]; then
+            echo "FAIL: expected 'true' but got '$FLAG_VALUE'"
+            exit 1
+          fi
+          echo "PASS: flag returned expected default value"
